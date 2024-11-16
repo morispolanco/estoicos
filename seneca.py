@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 from docx import Document
 from io import BytesIO
-import roman
 import time
 
 # Set page configuration
@@ -18,33 +17,22 @@ st.title("📜 Reimagine Seneca's Letters for the Modern Corporate World")
 
 # Description
 st.markdown("""
-Welcome to the **Seneca Letters Reimagined** app! Transform the timeless wisdom of Seneca into actionable insights tailored for today's corporate managers. Whether you're navigating leadership challenges, striving for work-life balance, or aiming to boost productivity, let Seneca guide you through the complexities of the modern workplace.
+Bienvenido a la aplicación **Seneca Letters Reimagined**! Transforma la sabiduría atemporal de Seneca en ideas prácticas adaptadas para los gerentes corporativos de hoy en día. Ya sea que estés navegando desafíos de liderazgo, buscando un equilibrio entre el trabajo y la vida personal, o intentando aumentar la productividad, deja que Seneca te guíe a través de las complejidades del entorno laboral moderno.
 
-**How to Use:**
-1. Enter the number of the letter you wish to adapt.
-2. Click "Generate Adaptation" to receive a modernized version of the letter.
-3. Repeat the process for multiple letters.
-4. Once done, download all your adapted letters in a single Word document.
+**Cómo Usar:**
+1. Ingresa el número de la carta que deseas adaptar.
+2. Haz clic en "Generar Adaptación" para recibir una versión modernizada de la carta.
+3. Repite el proceso para múltiples cartas.
+4. Una vez terminado, descarga todas tus cartas adaptadas en un único documento Word.
 """)
 
 # Initialize session state for storing adapted letters
 if 'adapted_letters' not in st.session_state:
     st.session_state['adapted_letters'] = {}
 
-# Function to convert integer to Roman numeral
-def int_to_roman(num):
-    try:
-        return roman.toRoman(num)
-    except roman.InvalidRomanNumeralError:
-        return None
-
-# Function to fetch original letter content from Wikisource
+# Función para fetch el contenido original de la carta desde Wikisource
 def fetch_letter_content(letter_num):
-    roman_num = int_to_roman(letter_num)
-    if not roman_num:
-        return None, "Invalid letter number. Please enter a number between 1 and 65."
-    
-    url = f"https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_{roman_num}"
+    url = f"https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_{letter_num}"
     response = requests.get(url)
     
     if response.status_code != 200:
@@ -52,7 +40,7 @@ def fetch_letter_content(letter_num):
     
     soup = BeautifulSoup(response.content, 'html.parser')
     
-    # Extract the main content of the letter
+    # Extraer el contenido principal de la carta
     content_div = soup.find('div', {'class': 'mw-parser-output'})
     if not content_div:
         return None, "Unable to parse the letter content."
@@ -61,7 +49,7 @@ def fetch_letter_content(letter_num):
     letter_content = ""
     for para in paragraphs:
         if para.name in ['h2', 'h3']:
-            continue  # Skip headers
+            continue  # Omitir encabezados
         letter_content += para.get_text(separator="\n") + "\n\n"
     
     if not letter_content.strip():
@@ -69,7 +57,7 @@ def fetch_letter_content(letter_num):
     
     return letter_content.strip(), None
 
-# Function to adapt the letter using Tune Studio API
+# Función para adaptar la carta usando la API de Tune Studio
 def adapt_letter(original_content):
     api_url = "https://proxy.tune.app/chat/completions"
     api_key = st.secrets["tune_api_key"]
@@ -86,7 +74,7 @@ Reimagine the following letter from Seneca to Lucilius, adapting it from its ori
 - Incorporate references to modern technology, work-life balance, stress, leadership, and productivity.
 - Adjust metaphors and examples to fit today's corporate culture.
 """
-
+    
     payload = {
         "temperature": 0.66,
         "messages": [
@@ -119,14 +107,14 @@ Reimagine the following letter from Seneca to Lucilius, adapting it from its ori
     except ValueError:
         return None, "Invalid response from the API."
 
-# Sidebar for user input
-st.sidebar.header("Generate Adapted Letters")
+# Sidebar para la entrada del usuario
+st.sidebar.header("Generar Cartas Adaptadas")
 with st.sidebar.form(key='letter_form'):
-    letter_number = st.number_input("Enter Letter Number (1-65)", min_value=1, max_value=65, step=1)
-    submit_button = st.form_submit_button(label='Generate Adaptation')
+    letter_number = st.number_input("Ingresa el Número de la Carta (1-65)", min_value=1, max_value=65, step=1)
+    submit_button = st.form_submit_button(label='Generar Adaptación')
 
 if submit_button:
-    with st.spinner('Fetching and adapting the letter...'):
+    with st.spinner('Obteniendo y adaptando la carta...'):
         original, error = fetch_letter_content(letter_number)
         if error:
             st.error(error)
@@ -135,48 +123,47 @@ if submit_button:
             if api_error:
                 st.error(api_error)
             else:
-                st.success(f"**Adapted Letter {letter_number} Generated Successfully!**")
-                st.markdown(f"### **Letter {letter_number} Adaptation:**")
+                st.success(f"**¡Carta Adaptada {letter_number} Generada Exitosamente!**")
+                st.markdown(f"### **Adaptación de la Carta {letter_number}:**")
                 st.write(adaptation)
                 
-                # Store the adapted letter in session state
+                # Almacenar la carta adaptada en el estado de la sesión
                 st.session_state['adapted_letters'][letter_number] = adaptation
 
-# Display adapted letters
+# Mostrar las cartas adaptadas
 if st.session_state['adapted_letters']:
     st.markdown("---")
-    st.header("📝 Your Adapted Letters")
+    st.header("📝 Tus Cartas Adaptadas")
     sorted_letters = dict(sorted(st.session_state['adapted_letters'].items()))
     for num, content in sorted_letters.items():
-        st.markdown(f"**Letter {num}:**")
+        st.markdown(f"**Carta {num}:**")
         st.write(content)
         st.markdown("---")
 
-    # Button to generate Word document
-    if st.button("📥 Download All Adapted Letters as Word Document"):
-        with st.spinner('Generating Word document...'):
+    # Botón para generar documento Word
+    if st.button("📥 Descargar Todas las Cartas Adaptadas como Documento Word"):
+        with st.spinner('Generando documento Word...'):
             doc = Document()
-            doc.add_heading('Adapted Letters of Seneca to Lucilius', 0)
+            doc.add_heading('Cartas Adaptadas de Seneca a Lucilius', 0)
 
             for num, content in sorted_letters.items():
-                doc.add_heading(f'Letter {num}', level=1)
+                doc.add_heading(f'Carta {num}', level=1)
                 doc.add_paragraph(content)
                 doc.add_page_break()
 
-            # Save the document to a BytesIO object
+            # Guardar el documento en un objeto BytesIO
             buffer = BytesIO()
             doc.save(buffer)
             buffer.seek(0)
 
-            # Provide download button
+            # Proveer botón de descarga
             st.download_button(
-                label="✅ Download Word Document",
+                label="✅ Descargar Documento Word",
                 data=buffer,
-                file_name="Adapted_Seneca_Letters.docx",
+                file_name="Cartas_Adaptadas_Seneca_Letters.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
 
 # Footer
 st.markdown("---")
-st.markdown("© 2024 Seneca Letters Reimagined | Powered by Streamlit and Tune Studio API")
-
+st.markdown("© 2024 Seneca Letters Reimagined | Powered by Streamlit y Tune Studio API")
