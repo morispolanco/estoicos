@@ -1,5 +1,5 @@
-streamlit==1.25.0
-requests==2.31.0
-beautifulsoup4==4.12.2
-python-docx==0.8.11
-roman==4.0.2
+streamlit
+requests
+beautifulsoup4
+python-docx
+roman
