@@ -38,10 +38,10 @@ def obtener_contenido_carta(numero):
     else:
         return None
 
-# Función para adaptar la carta usando la API
+# Función para adaptar la carta usando la API de X
 def adaptar_carta(contenido_original, numero_carta):
     api_key = st.secrets["api"]["key"]
-    url = "https://api.openai.com/v1/chat/completions"  # Asegúrate de que esta es la URL correcta de la API
+    url = "https://api.x.ai/v1/chat/completions"  # URL de la API de X
 
     prompt = f"""
 Reimagine letter number {numero_carta} of Seneca to Lucilius, adapting it from its original philosophical content to a modern corporate environment of 2024. Use simple and contemporary language while preserving Seneca's wisdom. Ensure that examples and metaphors are relevant to current challenges faced by corporate managers, including references to modern technology, work-life balance, and common issues such as stress, leadership, and productivity.
@@ -49,15 +49,15 @@ Reimagine letter number {numero_carta} of Seneca to Lucilius, adapting it from i
 Original Content:
 {contenido_original}
 
-Adaptation (use HTML formatting where appropriate, e.g., <i> for italics, <b> for bold, and appropriate heading tags):
+Adaptation (use proper formatting without Markdown symbols, e.g., use italics instead of asterisks, appropriate heading levels without hashtags):
 """
 
     payload = {
         "messages": [
-            {"role": "system", "content": "You are an assistant that adapts philosophical texts to modern corporate contexts using HTML formatting."},
+            {"role": "system", "content": "You are an assistant that adapts philosophical texts to modern corporate contexts using proper formatting."},
             {"role": "user", "content": prompt}
         ],
-        "model": "gpt-4",  # Ajusta el modelo según tu suscripción
+        "model": "grok-beta",  # Modelo especificado
         "stream": False,
         "temperature": 0.7
     }
@@ -67,14 +67,18 @@ Adaptation (use HTML formatting where appropriate, e.g., <i> for italics, <b> fo
         "Authorization": f"Bearer {api_key}"
     }
 
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        respuesta = response.json()
-        # Asumiendo que la respuesta tiene una estructura similar a OpenAI
-        adaptacion = respuesta.get('choices')[0].get('message').get('content').strip()
-        return adaptacion
-    else:
-        st.error(f"Error al adaptar la carta {numero_carta}: {response.status_code} - {response.text}")
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code == 200:
+            respuesta = response.json()
+            # Asumiendo que la respuesta tiene una estructura similar a OpenAI
+            adaptacion = respuesta.get('choices')[0].get('message').get('content').strip()
+            return adaptacion
+        else:
+            st.error(f"Error al adaptar la carta {numero_carta}: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        st.error(f"Excepción al adaptar la carta {numero_carta}: {e}")
         return None
 
 # Función para convertir HTML a formato de Python-docx
@@ -84,13 +88,13 @@ def html_a_docx(paragraph, html_text):
     for elem in soup:
         if isinstance(elem, str):
             paragraph.add_run(elem)
-        elif elem.name == 'i' or elem.name == 'em':
+        elif elem.name in ['i', 'em']:
             run = paragraph.add_run(elem.get_text())
             run.italic = True
-        elif elem.name == 'b' or elem.name == 'strong':
+        elif elem.name in ['b', 'strong']:
             run = paragraph.add_run(elem.get_text())
             run.bold = True
-        elif elem.name.startswith('h') and elem.name[1].isdigit():
+        elif re.match(r'h[1-6]', elem.name):
             # Manejar encabezados
             nivel = int(elem.name[1])
             if 1 <= nivel <= 6:
@@ -100,8 +104,8 @@ def html_a_docx(paragraph, html_text):
             # Manejar otros casos o etiquetas desconocidas
             paragraph.add_run(elem.get_text())
 
-# Obtener el total de cartas disponibles
-TOTAL_CARTAS = 65  # Total de cartas
+# Total de cartas disponibles
+TOTAL_CARTAS = 65  # Actualizado a 65 cartas
 
 # Entrada de números de cartas
 st.sidebar.header("Configuración de Adaptación")
