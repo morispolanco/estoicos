@@ -19,7 +19,7 @@ st.title("Adaptador de Cartas de Séneca a un Contexto Corporativo Moderno")
 
 # Descripción
 st.markdown("""
-Esta aplicación adapta las **Cartas de Séneca a Lucilio** a un entorno corporativo moderno, proporcionando consejos relevantes para los gestores de empresas en 2024.
+Esta aplicación adapta las **65 Cartas de Séneca a Lucilio** a un entorno corporativo moderno, proporcionando consejos relevantes para los gestores de empresas en 2024.
 """)
 
 # Función para obtener el contenido de una carta específica
@@ -41,7 +41,7 @@ def obtener_contenido_carta(numero):
 # Función para adaptar la carta usando la API
 def adaptar_carta(contenido_original, numero_carta):
     api_key = st.secrets["api"]["key"]
-    url = "https://api.x.ai/v1/chat/completions"  # Asegúrate de que esta es la URL correcta de la API
+    url = "https://api.openai.com/v1/chat/completions"  # Asegúrate de que esta es la URL correcta de la API
 
     prompt = f"""
 Reimagine letter number {numero_carta} of Seneca to Lucilius, adapting it from its original philosophical content to a modern corporate environment of 2024. Use simple and contemporary language while preserving Seneca's wisdom. Ensure that examples and metaphors are relevant to current challenges faced by corporate managers, including references to modern technology, work-life balance, and common issues such as stress, leadership, and productivity.
@@ -49,15 +49,15 @@ Reimagine letter number {numero_carta} of Seneca to Lucilius, adapting it from i
 Original Content:
 {contenido_original}
 
-Adaptation (use HTML formatting where appropriate, e.g., <i> for italics):
+Adaptation (use HTML formatting where appropriate, e.g., <i> for italics, <b> for bold, and appropriate heading tags):
 """
 
     payload = {
         "messages": [
-            {"role": "system", "content": "You are an assistant that adapts philosophical texts to modern contexts using HTML formatting."},
+            {"role": "system", "content": "You are an assistant that adapts philosophical texts to modern corporate contexts using HTML formatting."},
             {"role": "user", "content": prompt}
         ],
-        "model": "grok-beta",  # Asegúrate de que este es el modelo correcto
+        "model": "gpt-4",  # Ajusta el modelo según tu suscripción
         "stream": False,
         "temperature": 0.7
     }
@@ -74,24 +74,34 @@ Adaptation (use HTML formatting where appropriate, e.g., <i> for italics):
         adaptacion = respuesta.get('choices')[0].get('message').get('content').strip()
         return adaptacion
     else:
-        st.error(f"Error al adaptar la carta {numero_carta}: {response.status_code}")
+        st.error(f"Error al adaptar la carta {numero_carta}: {response.status_code} - {response.text}")
         return None
 
-# Función para convertir HTML simple a formato de Python-docx
+# Función para convertir HTML a formato de Python-docx
 def html_a_docx(paragraph, html_text):
-    # Este es un convertidor muy básico que solo maneja <i> para cursiva
-    # Puedes expandirlo para manejar más etiquetas según sea necesario
-    parts = re.split(r'(<i>.*?</i>)', html_text)
-    for part in parts:
-        if part.startswith('<i>') and part.endswith('</i>'):
-            text = part[3:-4]
-            run = paragraph.add_run(text)
+    # Parsear el HTML usando BeautifulSoup
+    soup = BeautifulSoup(html_text, 'html.parser')
+    for elem in soup:
+        if isinstance(elem, str):
+            paragraph.add_run(elem)
+        elif elem.name == 'i' or elem.name == 'em':
+            run = paragraph.add_run(elem.get_text())
             run.italic = True
+        elif elem.name == 'b' or elem.name == 'strong':
+            run = paragraph.add_run(elem.get_text())
+            run.bold = True
+        elif elem.name.startswith('h') and elem.name[1].isdigit():
+            # Manejar encabezados
+            nivel = int(elem.name[1])
+            if 1 <= nivel <= 6:
+                paragraph.style = f'Heading {nivel}'
+                paragraph.add_run(elem.get_text())
         else:
-            paragraph.add_run(part)
+            # Manejar otros casos o etiquetas desconocidas
+            paragraph.add_run(elem.get_text())
 
 # Obtener el total de cartas disponibles
-TOTAL_CARTAS = 65  # Actualizado a 65 cartas
+TOTAL_CARTAS = 65  # Total de cartas
 
 # Entrada de números de cartas
 st.sidebar.header("Configuración de Adaptación")
@@ -155,7 +165,10 @@ if st.sidebar.button("Adaptar Cartas"):
         estilo_normal.font.size = Pt(12)
 
         for titulo, contenido in documentos.items():
+            # Agregar título como encabezado de nivel 1
             doc.add_heading(titulo, level=1)
+
+            # Dividir el contenido en párrafos basados en saltos de línea dobles
             paragraphs = contenido.split('\n\n')
             for para in paragraphs:
                 paragraph = doc.add_paragraph()
