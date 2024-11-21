@@ -5,7 +5,14 @@ from docx import Document
 from io import BytesIO
 import time
 
-# Inyectar estilos CSS personalizados
+# 1. Configuración de la página (Debe ser la primera llamada de Streamlit)
+st.set_page_config(
+    page_title="Seneca Letters Reimagined",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# 2. Inyectar estilos CSS personalizados
 st.markdown(
     """
     <style>
@@ -36,7 +43,7 @@ st.markdown(
     }
 
     /* Botones */
-    .css-1emrehy edgvbvh3 {
+    .stButton > button {
         background-color: #2980b9;
         color: white;
         border-radius: 5px;
@@ -114,17 +121,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Configuración de la página
-st.set_page_config(
-    page_title="Seneca Letters Reimagined",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-# Título de la app
+# 3. Título de la app
 st.title("📜 Reimagine Seneca's Letters for the Modern Corporate World")
 
-# Descripción
+# 4. Descripción
 st.markdown("""
 Bienvenido a la aplicación **Seneca Letters Reimagined**! Transforma la sabiduría atemporal de Seneca en ideas prácticas adaptadas para los gerentes corporativos de hoy en día. Ya sea que estés navegando desafíos de liderazgo, buscando un equilibrio entre el trabajo y la vida personal, o intentando aumentar la productividad, deja que Seneca te guíe a través de las complejidades del entorno laboral moderno.
 
@@ -134,7 +134,7 @@ Bienvenido a la aplicación **Seneca Letters Reimagined**! Transforma la sabidur
 3. Una vez completado, descarga todas tus cartas adaptadas en un único documento Word.
 """)
 
-# Inicializar el estado de sesión para almacenar cartas adaptadas
+# 5. Inicializar el estado de sesión para almacenar cartas adaptadas
 if 'adapted_letters' not in st.session_state:
     st.session_state['adapted_letters'] = {}
 
