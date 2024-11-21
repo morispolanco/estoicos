@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import os
 
-# Configurar la clave de API de x.ai
+# Configurar la clave de API de x.ai 
 XAI_API_KEY = st.secrets["XAI_API_KEY"]
 
 def generar_libro(titulo, num_capitulos, num_secciones):
