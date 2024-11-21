@@ -5,17 +5,126 @@ from docx import Document
 from io import BytesIO
 import time
 
-# Set page configuration
+# Inyectar estilos CSS personalizados
+st.markdown(
+    """
+    <style>
+    /* Fondo general */
+    body {
+        background-color: #f5f5f5;
+        color: #333333;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    /* Título principal */
+    .css-1aumxhk h1 {
+        color: #2c3e50;
+        font-size: 2.5em;
+        text-align: center;
+        margin-bottom: 0.5em;
+    }
+
+    /* Descripción */
+    .css-1d391kg p {
+        font-size: 1.1em;
+        line-height: 1.6;
+    }
+
+    /* Encabezados secundarios */
+    .css-1aumxhk h2, .css-1aumxhk h3 {
+        color: #34495e;
+    }
+
+    /* Botones */
+    .css-1emrehy edgvbvh3 {
+        background-color: #2980b9;
+        color: white;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 1em;
+    }
+
+    /* Botón de descarga */
+    .stDownloadButton > button {
+        background-color: #27ae60;
+        color: white;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 1em;
+    }
+
+    /* Barra de progreso */
+    .stProgress > div > div > div {
+        background-color: #2980b9;
+    }
+
+    /* Separadores */
+    hr {
+        border: 0;
+        height: 1px;
+        background: #bdc3c7;
+        margin: 2em 0;
+    }
+
+    /* Pie de página */
+    .footer {
+        text-align: center;
+        font-size: 0.9em;
+        color: #7f8c8d;
+        margin-top: 2em;
+    }
+
+    /* Formularios en la barra lateral */
+    .sidebar .sidebar-content {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Mejorar la apariencia de los selects y inputs */
+    select, input[type="number"] {
+        border: 1px solid #bdc3c7;
+        border-radius: 5px;
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 1em;
+    }
+
+    /* Estilo para los mensajes de error, éxito y advertencia */
+    .stAlert > div {
+        border-radius: 5px;
+        padding: 10px;
+    }
+
+    .stAlert .stAlert__icon {
+        color: #e74c3c; /* Rojo para errores */
+    }
+
+    .stSuccess .stAlert__icon {
+        color: #27ae60; /* Verde para éxito */
+    }
+
+    .stWarning .stAlert__icon {
+        color: #f39c12; /* Naranja para advertencias */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Configuración de la página
 st.set_page_config(
     page_title="Seneca Letters Reimagined",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Title of the app
+# Título de la app
 st.title("📜 Reimagine Seneca's Letters for the Modern Corporate World")
 
-# Description
+# Descripción
 st.markdown("""
 Bienvenido a la aplicación **Seneca Letters Reimagined**! Transforma la sabiduría atemporal de Seneca en ideas prácticas adaptadas para los gerentes corporativos de hoy en día. Ya sea que estés navegando desafíos de liderazgo, buscando un equilibrio entre el trabajo y la vida personal, o intentando aumentar la productividad, deja que Seneca te guíe a través de las complejidades del entorno laboral moderno.
 
@@ -25,11 +134,11 @@ Bienvenido a la aplicación **Seneca Letters Reimagined**! Transforma la sabidur
 3. Una vez completado, descarga todas tus cartas adaptadas en un único documento Word.
 """)
 
-# Initialize session state for storing adapted letters
+# Inicializar el estado de sesión para almacenar cartas adaptadas
 if 'adapted_letters' not in st.session_state:
     st.session_state['adapted_letters'] = {}
 
-# Función para fetch el contenido original de la carta desde Wikisource
+# Función para obtener el contenido original de la carta desde Wikisource
 def fetch_letter_content(letter_num):
     url = f"https://en.wikisource.org/wiki/Moral_letters_to_Lucilius/Letter_{letter_num}"
     response = requests.get(url)
@@ -106,7 +215,7 @@ Reimagine the following letter from Seneca to Lucilius, adapting it from its ori
     except ValueError:
         return None, "Respuesta inválida de la API."
 
-# Sidebar para la entrada del usuario
+# Barra lateral para la entrada del usuario
 st.sidebar.header("Generar Cartas Adaptadas en Lote")
 with st.sidebar.form(key='batch_form'):
     # Permitir selección múltiple de cartas
@@ -183,6 +292,6 @@ if st.session_state['adapted_letters']:
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
 
-# Footer
+# Pie de página
 st.markdown("---")
-st.markdown("© 2024 Seneca Letters Reimagined | Powered by Streamlit y Tune Studio API")
+st.markdown("<div class='footer'>© 2024 Seneca Letters Reimagined | Powered by Streamlit y Tune Studio API</div>", unsafe_allow_html=True)
