@@ -12,27 +12,29 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 2. Inyectar estilos CSS personalizados
+# 2. Inyectar estilos CSS personalizados para una UI más elegante
 st.markdown(
     """
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <style>
-    /* Fondo general */
+    /* Tipografía global */
     body {
-        background-color: #f5f5f5;
+        font-family: 'Roboto', sans-serif;
+        background-color: #f0f2f6;
         color: #333333;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* Título principal */
+    /* Títulos principales */
     .css-1aumxhk h1 {
         color: #2c3e50;
-        font-size: 2.5em;
+        font-family: 'Playfair Display', serif;
+        font-size: 3em;
         text-align: center;
         margin-bottom: 0.5em;
     }
 
     /* Descripción */
-    .css-1d391kg p {
+    .css-1d391kg p, .css-1d391kg ul, .css-1d391kg ol {
         font-size: 1.1em;
         line-height: 1.6;
     }
@@ -40,29 +42,43 @@ st.markdown(
     /* Encabezados secundarios */
     .css-1aumxhk h2, .css-1aumxhk h3 {
         color: #34495e;
+        font-family: 'Roboto', sans-serif;
     }
 
-    /* Botones */
+    /* Botones principales */
     .stButton > button {
         background-color: #2980b9;
         color: white;
-        border-radius: 5px;
-        padding: 10px 20px;
+        border-radius: 8px;
+        padding: 12px 24px;
         font-size: 1em;
+        transition: background-color 0.3s, transform 0.3s;
+    }
+
+    .stButton > button:hover {
+        background-color: #1f6391;
+        transform: translateY(-2px);
     }
 
     /* Botón de descarga */
     .stDownloadButton > button {
         background-color: #27ae60;
         color: white;
-        border-radius: 5px;
-        padding: 10px 20px;
+        border-radius: 8px;
+        padding: 12px 24px;
         font-size: 1em;
+        transition: background-color 0.3s, transform 0.3s;
+    }
+
+    .stDownloadButton > button:hover {
+        background-color: #1e8449;
+        transform: translateY(-2px);
     }
 
     /* Barra de progreso */
-    .stProgress > div > div > div {
+    div.stProgress > div > div > div {
         background-color: #2980b9;
+        border-radius: 10px;
     }
 
     /* Separadores */
@@ -73,12 +89,14 @@ st.markdown(
         margin: 2em 0;
     }
 
-    /* Pie de página */
+    /* Footer */
     .footer {
         text-align: center;
         font-size: 0.9em;
         color: #7f8c8d;
         margin-top: 2em;
+        padding: 10px 0;
+        border-top: 1px solid #bdc3c7;
     }
 
     /* Formularios en la barra lateral */
@@ -86,23 +104,47 @@ st.markdown(
         background-color: #ffffff;
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     /* Mejorar la apariencia de los selects y inputs */
     select, input[type="number"] {
         border: 1px solid #bdc3c7;
-        border-radius: 5px;
-        padding: 8px;
+        border-radius: 8px;
+        padding: 10px;
         width: 100%;
         box-sizing: border-box;
         margin-bottom: 1em;
+        font-size: 1em;
+        transition: border-color 0.3s;
     }
 
-    /* Estilo para los mensajes de error, éxito y advertencia */
+    select:focus, input[type="number"]:focus {
+        border-color: #2980b9;
+        outline: none;
+        box-shadow: 0 0 5px rgba(41, 128, 185, 0.5);
+    }
+
+    /* Tarjetas para cartas adaptadas */
+    .card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Estilo para los mensajes de alerta */
     .stAlert > div {
-        border-radius: 5px;
-        padding: 10px;
+        border-radius: 8px;
+        padding: 15px;
+        font-size: 1em;
     }
 
     .stAlert .stAlert__icon {
@@ -115,6 +157,14 @@ st.markdown(
 
     .stWarning .stAlert__icon {
         color: #f39c12; /* Naranja para advertencias */
+    }
+
+    /* Personalizar la barra lateral */
+    .sidebar .sidebar-content {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     </style>
     """,
@@ -264,9 +314,7 @@ if st.session_state['adapted_letters']:
     st.header("📝 Tus Cartas Adaptadas")
     sorted_letters = dict(sorted(st.session_state['adapted_letters'].items()))
     for num, content in sorted_letters.items():
-        st.markdown(f"**Carta {num}:**")
-        st.write(content)
-        st.markdown("---")
+        st.markdown(f"<div class='card'><h2>Carta {num}</h2><p>{content.replace('\n', '<br>')}</p></div>", unsafe_allow_html=True)
 
     # Botón para generar documento Word
     if st.button("📥 Descargar Todas las Cartas Adaptadas como Documento Word"):
@@ -293,5 +341,4 @@ if st.session_state['adapted_letters']:
             )
 
 # Pie de página
-st.markdown("---")
 st.markdown("<div class='footer'>© 2024 Seneca Letters Reimagined | Powered by Streamlit y Tune Studio API</div>", unsafe_allow_html=True)
