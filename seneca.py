@@ -1,14 +1,37 @@
 import streamlit as st
 import requests
-import os
+import re
 
-# Configurar la clave de API de x.ai 
+# Configurar la clave de API de x.ai
 XAI_API_KEY = st.secrets["XAI_API_KEY"]
+
+def parse_esquema(esquema):
+    capitulos = {}
+    cap_pattern = re.compile(r'Capítulo\s*\d+[:\.\-]?\s*(.*)', re.IGNORECASE)
+    seccion_pattern = re.compile(r'(?:-|\*)\s*Sección\s*\d+[:\.\-]?\s*(.*)', re.IGNORECASE)
+
+    cap = None
+    for linea in esquema.split('\n'):
+        cap_match = cap_pattern.match(linea)
+        if cap_match:
+            cap = cap_match.group(1).strip()
+            capitulos[cap] = []
+            continue
+        seccion_match = seccion_pattern.match(linea)
+        if seccion_match and cap:
+            seccion = seccion_match.group(1).strip()
+            capitulos[cap].append(seccion)
+    
+    return capitulos
 
 def generar_libro(titulo, num_capitulos, num_secciones):
     try:
         # 1. Generar el esquema del libro
-        esquema_prompt = f"Genera un esquema detallado para un libro titulado '{titulo}' con {num_capitulos} capítulos, cada uno con {num_secciones} secciones. Lista los títulos de cada capítulo y sus respectivas secciones."
+        esquema_prompt = (
+            f"Necesito que generes un esquema detallado para un libro titulado '{titulo}'. "
+            f"El libro debe tener {num_capitulos} capítulos, y cada capítulo debe estar dividido en {num_secciones} secciones. "
+            f"Proporciona los títulos de cada capítulo y las secciones correspondientes de manera clara y organizada."
+        )
         
         esquema_response = requests.post(
             "https://api.x.ai/v1/chat/completions",
@@ -20,7 +43,7 @@ def generar_libro(titulo, num_capitulos, num_secciones):
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are a test assistant."
+                        "content": "Eres un asistente experto en estructuración y generación de contenido para libros. Ayudas a crear esquemas detallados y desarrollas el contenido de cada sección de manera clara y coherente."
                     },
                     {
                         "role": "user",
@@ -29,7 +52,7 @@ def generar_libro(titulo, num_capitulos, num_secciones):
                 ],
                 "model": "grok-beta",
                 "stream": False,
-                "temperature": 0
+                "temperature": 0.7
             }
         )
 
@@ -38,27 +61,32 @@ def generar_libro(titulo, num_capitulos, num_secciones):
             return ""
 
         esquema = esquema_response.json().get("choices", [{}])[0].get("message", {}).get("content", "")
-
-        # Parsear el esquema para obtener capítulos y secciones
-        lineas = esquema.split('\n')
-        capitulos = {}
-        cap = ""
-        for linea in lineas:
-            if linea.lower().startswith("capítulo"):
-                cap = linea.strip()
-                capitulos[cap] = []
-            elif linea.lower().startswith("- sección") or linea.lower().startswith("sección"):
-                seccion = linea.replace("- ", "").strip()
-                capitulos[cap].append(seccion)
         
+        # **Agregar depuración: Mostrar el esquema generado**
+        st.subheader("Esquema Generado")
+        st.text(esquema)
+
+        # Parsear el esquema usando expresiones regulares
+        capitulos = parse_esquema(esquema)
+        
+        if not capitulos:
+            st.error("No se pudieron extraer los capítulos y secciones del esquema generado. Revisa el esquema o ajusta los prompts.")
+            return ""
+
         # 2. Generar contenido para cada sección
         libro = f"# {titulo}\n\n"
         for cap_num, (capitulo, secciones) in enumerate(capitulos.items(), 1):
             libro += f"## {capitulo}\n\n"
             for sec_num, seccion in enumerate(secciones, 1):
                 # Extraer título de la sección
-                titulo_seccion = seccion.split(":")[1].strip() if ":" in seccion else seccion
-                seccion_prompt = f"Escribe una sección detallada titulada '{titulo_seccion}' para el capítulo '{capitulo}' de un libro sobre '{titulo}'."
+                if ":" in seccion:
+                    titulo_seccion = seccion.split(":", 1)[1].strip()
+                else:
+                    titulo_seccion = seccion
+                seccion_prompt = (
+                    f"Escribe una sección detallada titulada '{titulo_seccion}' para el capítulo '{capitulo}' de un libro sobre '{titulo}'. "
+                    f"La sección debe tener aproximadamente 300 palabras, ser clara, coherente y proporcionar información relevante y bien estructurada sobre el tema."
+                )
                 
                 seccion_response = requests.post(
                     "https://api.x.ai/v1/chat/completions",
@@ -70,7 +98,7 @@ def generar_libro(titulo, num_capitulos, num_secciones):
                         "messages": [
                             {
                                 "role": "system",
-                                "content": "You are a test assistant."
+                                "content": "Eres un escritor experto que ayuda a desarrollar contenido de libros de manera clara y coherente."
                             },
                             {
                                 "role": "user",
@@ -79,7 +107,8 @@ def generar_libro(titulo, num_capitulos, num_secciones):
                         ],
                         "model": "grok-beta",
                         "stream": False,
-                        "temperature": 0
+                        "temperature": 0.7,
+                        "max_tokens": 500
                     }
                 )
 
